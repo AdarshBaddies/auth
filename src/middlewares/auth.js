@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+
+import database from "../config/db.js";
 import { env } from "../config/env.js";
+
+
 
 export const requireAuth = async (req, res, next) => {
   try {
@@ -8,8 +11,16 @@ export const requireAuth = async (req, res, next) => {
     const token = header.startsWith("Bearer ") ? header.substring(7) : null;
     if (!token) return res.status(401).json({ message: "Unauthorized" });
     const decoded = jwt.verify(token, env.jwtAccessSecret);
-    const user = await User.findById(decoded.sub);
-    if (!user || !user.isActive) return res.status(401).json({ message: "Unauthorized" });
+    //to fetch the user jwt and check
+    const user = await database.query(
+      `SELECT u.*, rt.token_hash, rt.id as token_id 
+       FROM users u 
+       JOIN refresh_tokens rt ON u.id = rt.user_id 
+       WHERE u.id = $1 AND rt.revoked_at IS NULL AND rt.expires_at > NOW()`,
+      [decoded.sub]
+    );
+
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
     req.user = user;
     next();
   } catch (err) {

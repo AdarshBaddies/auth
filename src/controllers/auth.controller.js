@@ -25,7 +25,7 @@ const buildAuthResponse = (user) => ({
   updated_at: user.updated_at
 });
 
-const createAuditLog = async (userId, action, resource, resourceId, oldValues, newValues, metadata) => {
+export const createAuditLog = async (userId, action, resource, resourceId, oldValues, newValues, metadata) => {
   try {
     const auditPayload = createAuditPayload(action, resource, resourceId, oldValues, newValues, metadata);
     await database.query(
