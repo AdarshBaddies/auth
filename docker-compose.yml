@@ -10,13 +10,44 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongo
+      - postgres
+      - redis
+    networks:
+      - auth-network
+    volumes:
+      - ./logs:/app/logs
 
-  mongo:
-    image: mongo:7
-    container_name: mongo
+  postgres:
+    image: postgres:15-alpine
+    container_name: auth-postgres
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "5432:5432"
     environment:
-      MONGO_INITDB_DATABASE: authDB
+      POSTGRES_DB: bookmyshow
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - auth-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: auth-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - auth-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  auth-network:
+    driver: bridge
