@@ -24,3 +24,5 @@ router.post("/backup-codes", generateBackupCodes);
 router.get("/status", getMFAStatus);
 
 export default router;
+
+
